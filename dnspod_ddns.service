@@ -2,4 +2,4 @@
 Description=update hexingzhi.com DNS.
 
 [Service]
-ExecStart=/root/publish/dnspod_ddns -t 94229,087fcc5f22e1c9aaa78517081bd2334d -d hexingzhi.com
+ExecStart=/root/publish/dnspod_ddns -t your_token -d google.com
