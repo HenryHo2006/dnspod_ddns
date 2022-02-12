@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net;
 using System.Net.Http;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -140,7 +141,11 @@ namespace dnspod_ddns
 
         private static async Task<string> getPublicIp()
         {
-            string url = "http://216.146.43.70";  // checkip.dyndns.org 有时候被墙，出错
+            IPHostEntry hostEntry = Dns.GetHostEntry("checkip.dyndns.org");
+            IPAddress[] ips = hostEntry.AddressList;
+            if (ips.Length == 0)
+                throw new Exception("DNS无法解析checkip.dyndns.org的IP");
+            string url = $"http://{ips[0]}";  // checkip.dyndns.org 有时候被墙，出错
             string response = await _HttpClient.GetStringAsync(url);
             string[] a = response.Split(':');
             if (a.Length == 1)
