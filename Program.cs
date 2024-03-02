@@ -7,6 +7,7 @@ using System.IO;
 
 using Microsoft.Extensions.CommandLineUtils;
 using Newtonsoft.Json;
+using System.Net.Sockets;
 
 namespace dnspod_ddns
 {
@@ -69,9 +70,9 @@ namespace dnspod_ddns
               "-d | --domain <domain>",
               "域名(例如：youname.com)",
               CommandOptionType.SingleValue);
-            CommandOption subdomain = commandLineApplication.Option(
-              "-s | --subdomain <subdomain>", "子域名(例如：www)",
-              CommandOptionType.SingleValue);
+            //CommandOption subdomain = commandLineApplication.Option(
+            //  "-s | --subdomain <subdomain>", "子域名(例如：www)",
+            //  CommandOptionType.SingleValue);
 
             commandLineApplication.HelpOption("-? | -h | --help");
             commandLineApplication.OnExecute(async () =>
@@ -81,30 +82,35 @@ namespace dnspod_ddns
                     commandLineApplication.ShowHelp();
                     return 0;
                 }
-                await main(token.Value(), domain.Value(), subdomain.HasValue() ? subdomain.Value() : "@");
+                //await main(token.Value(), domain.Value(), subdomain.HasValue() ? subdomain.Value() : "@");
+                await main(token.Value(), domain.Value(), "@", "diskstation");
+                await main(token.Value(), domain.Value(), "pc", "");
                 return 0;
             });
             commandLineApplication.Execute(args);
         }
 
-        private static async Task main(string token, string domain, string subdomain)
+        private static async Task main(string token, string domain, string subdomain, string local_host_name)
         {
             string ip;
             try
             {
-                ip = await getPublicIp();
-                Console.WriteLine($"拿公网ip成功:{ip}");
+                //ip = await getPublicIp();
+                //Console.WriteLine($"拿公网ip成功:{ip}");
+                ip = GetIPv6Address(local_host_name);
+                Console.WriteLine($"拿{local_host_name}的ip成功:{ip}");
             }
             catch (Exception ex)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine($"拿公网ip出错:{ex.Message}");
+                //Console.WriteLine($"拿公网ip出错:{ex.Message}");
+                Console.WriteLine($"拿{local_host_name}的ip出错:{ex.Message}");
                 Console.ResetColor();
                 return;
             }
 
             string last_success_ip = string.Empty;
-            string file = Path.GetTempPath() + "last_success_ip.txt";
+            string file = Path.GetTempPath() + $"last_success_{local_host_name}_ip.txt";
             try
             {
                 if(File.Exists(file))
@@ -139,6 +145,30 @@ namespace dnspod_ddns
             }
         }
 
+        private static string GetIPv6Address(string host)
+        {
+            // 获取本地计算机的主机名
+            if(string.IsNullOrEmpty(host))
+                host = Dns.GetHostName();
+
+            // 获取主机的IP地址列表
+            IPAddress[] addresses = Dns.GetHostAddresses(host);
+
+            foreach (IPAddress address in addresses)
+            {
+                // 检查是否为IPv6地址
+                if (address.AddressFamily == AddressFamily.InterNetworkV6)
+                {
+                    // 检查是否为本地链路本地地址（Local Link）
+                    if (!address.IsIPv6LinkLocal)
+                    {
+                        return address.ToString();
+                    }
+                }
+            }
+
+            throw new Exception("无ipv6地址，或未开机或未联网");
+        }
         private static async Task<string> getPublicIp()
         {
             IPHostEntry hostEntry = Dns.GetHostEntry("checkip.dyndns.org");
@@ -178,7 +208,7 @@ namespace dnspod_ddns
             {
                 foreach(var rec in status_records.records)
                 {
-                    if(rec.type == "A" && rec.name == subdomain)
+                    if(rec.type == "AAAA" && rec.name == subdomain)
                     {
                         found_rec = rec;
                         break;
