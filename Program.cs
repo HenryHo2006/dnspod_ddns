@@ -70,9 +70,13 @@ namespace dnspod_ddns
               "-d | --domain <domain>",
               "域名(例如：youname.com)",
               CommandOptionType.SingleValue);
-            //CommandOption subdomain = commandLineApplication.Option(
-            //  "-s | --subdomain <subdomain>", "子域名(例如：www)",
-            //  CommandOptionType.SingleValue);
+            CommandOption subdomain = commandLineApplication.Option(
+              "-s | --subdomain <subdomain>", "子域名(例如：www)",
+              CommandOptionType.SingleValue);
+            CommandOption local = commandLineApplication.Option(
+              "-l | --local <local>",
+              "本地主机名",
+              CommandOptionType.SingleValue);
 
             commandLineApplication.HelpOption("-? | -h | --help");
             commandLineApplication.OnExecute(async () =>
@@ -83,8 +87,10 @@ namespace dnspod_ddns
                     return 0;
                 }
                 //await main(token.Value(), domain.Value(), subdomain.HasValue() ? subdomain.Value() : "@");
-                await main(token.Value(), domain.Value(), "@", "diskstation");
-                await main(token.Value(), domain.Value(), "pc", "");
+                //await main(token.Value(), domain.Value(), "@", "diskstation");
+                //await main(token.Value(), domain.Value(), "pc", "");
+                await main(token.Value(), domain.Value(), subdomain.HasValue() ? subdomain.Value() : "@",
+                    local.HasValue() ? local.Value() : "");
                 return 0;
             });
             commandLineApplication.Execute(args);
