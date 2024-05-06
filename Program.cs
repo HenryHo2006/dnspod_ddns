@@ -165,6 +165,16 @@ namespace dnspod_ddns
                 // 检查是否为IPv6地址
                 if (address.AddressFamily == AddressFamily.InterNetworkV6)
                 {
+                    Console.WriteLine($"ipv6:{address} isLocal:{address.IsIPv6LinkLocal} " +
+                                      $"isSiteLocal:{address.IsIPv6SiteLocal} isUniqueLocal:{address.IsIPv6UniqueLocal}");
+                }
+            }
+
+            foreach (IPAddress address in addresses)
+            {
+                // 检查是否为IPv6地址
+                if (address.AddressFamily == AddressFamily.InterNetworkV6)
+                {
                     // 检查是否为本地链路本地地址（Local Link）
                     if (!address.IsIPv6LinkLocal)
                     {
